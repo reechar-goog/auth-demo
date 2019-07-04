@@ -1,0 +1,104 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: auth-app-vault-static
+  name: auth-app-vault-static
+  namespace: auth-demo-vault-static
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-app-vault-static
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: auth-app-vault-static
+    spec:
+      containers:
+      - env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /var/secrets/google/key.json
+        image: gcr.io/reechar-hedge-gke-auth/security-demo-app:latest
+        imagePullPolicy: Always
+        name: security-demo-app
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/run/secrets/vaultproject.io
+          name: vault-auth
+        - mountPath: /var/secrets/google
+          name: google-cloud-key
+
+      dnsPolicy: ClusterFirst
+      initContainers:
+      - env:
+        - name: VAULT_ROLE
+          value: demo-static
+        - name: VAULT_ADDR
+          value: https://35.245.218.119:443
+        - name: VAULT_CAPEM
+          value: |
+            -----BEGIN CERTIFICATE-----
+            MIIDMjCCAhqgAwIBAgIQWkDhOqr6Dr4CkucPWDne1jANBgkqhkiG9w0BAQsFADAz
+            MRgwFgYDVQQKEw9IYXNoaUNvcnAgVmF1bHQxFzAVBgNVBAMTDnZhdWx0LWNhLmxv
+            Y2FsMB4XDTE5MDcwMTE1MDAxNFoXDTIwMDYzMDE1MDAxNFowMzEYMBYGA1UEChMP
+            SGFzaGlDb3JwIFZhdWx0MRcwFQYDVQQDEw52YXVsdC1jYS5sb2NhbDCCASIwDQYJ
+            KoZIhvcNAQEBBQADggEPADCCAQoCggEBAMrjixHfG0a5IbwFOsC0Jk9VoywuAH3r
+            c49F8YiVv62Ewok0Rzq0o8bDNoT7I1LGuIz33vDeVsJ7tpEtjrFy2IKKfwb54iPy
+            eRx1iYEvmtpOXuyMzpYbIyGU1Bls7BJ+GGyy2AEWgA9xJ2c2KGCmqVpctrkrNxqj
+            Tm9e/rHoyyHj8Yc2lS2aqRZZC1YbVmvWYIIEoNFQRbYjD5bMIKyOth+/pXp148Pp
+            KJmTSiZ28WX2+COFMvfSk4p3waAGV645W4soGwtqNZDXr58feGHW9obcwPBLT0F3
+            FVxaOITyakwBeaqCxyeplUzScj2xDuS0Pd0l2WpZU2XjkWxg+z6GvVsCAwEAAaNC
+            MEAwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFA1K
+            2gnOmwi1uMDwEofiJTxUCQNSMA0GCSqGSIb3DQEBCwUAA4IBAQAYnFvSZUT8KsOg
+            hMNgDHNMjZgl/K9Auskgi75kHG+HRNbusTciXdDyAu2usuyggnAo/7vibi8aSGXB
+            SmxZqO0l6QeUkY+KOPbvyVbgItQnvUjyGU+diIce8pG0OLxHiZ5FMiw2iGF+N4dO
+            Afblj1t4laQVTGL664gwpQikjor9AUJH34xn5SgT3zksh8ZdL5j5FwYKABQYb19N
+            tvRlbbeCGU23mH0NXT4a5arIQMr6usLzPorGlfGvKnmJijf06Xt3MSGaBOF6ca4u
+            Aki1DPxb0mUkFkqiS4+s4iACM9Mv0PHBm5QFKRsui1O7iKojJyybE6WFbSkPXlJB
+            pDXSzY++
+            -----END CERTIFICATE-----
+        image: sethvargo/vault-kubernetes-authenticator:0.2.0
+        imagePullPolicy: Always
+        name: vault-authenticator
+        resources: {}
+        securityContext:
+          allowPrivilegeEscalation: false
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/run/secrets/vaultproject.io
+          name: vault-auth
+      - name: init-bb
+        image: gcr.io/reechar-hedge-gke-auth/curler
+        command: ["/bin/bash", "-c"]
+        args:
+        - "curl -H \"X-Vault-Token: `cat /var/run/secrets/vaultproject.io/.vault-token`\" https://35.245.218.119/v1/secret/kv1/demo/key -k | jq  .data.file | jq '. | fromjson' > /var/secrets/google/key.json"
+        volumeMounts:
+        - mountPath: /var/run/secrets/vaultproject.io
+          name: vault-auth
+        - mountPath: /var/secrets/google
+          name: google-cloud-key
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: vault-auth-static
+      serviceAccountName: vault-auth-static
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir:
+          medium: Memory
+        name: vault-auth
+      - emptyDir:
+          medium: Memory
+        name: vault-secrets
+      - emptyDir:
+          medium: Memory
+        name: google-cloud-key

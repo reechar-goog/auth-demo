@@ -1,0 +1,34 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: auth-app-workload-identity
+  name: auth-app-workload-identity
+  namespace: auth-demo-workload-identity
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-app-workload-identity
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: auth-app-workload-identity
+    spec:
+      containers:
+      - image: gcr.io/reechar-hedge-gke-auth/security-demo-app:latest
+        imagePullPolicy: Always
+        name: security-demo-app
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
