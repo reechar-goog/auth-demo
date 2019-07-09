@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: auth-app-vault-dynamic
+  name: auth-app-vault-dynamic-service
+  namespace: auth-demo-vault-dynamic
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: auth-app-vault-dynamic
+  sessionAffinity: None
+  type: NodePort

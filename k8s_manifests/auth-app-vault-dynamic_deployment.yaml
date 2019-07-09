@@ -2,14 +2,14 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   labels:
-    app: auth-app-vault-static
-  name: auth-app-vault-static
-  namespace: auth-demo-vault-static
+    app: auth-app-vault-dynamic
+  name: auth-app-vault-dynamic
+  namespace: auth-demo-vault-dynamic
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: auth-app-vault-static
+      app: auth-app-vault-dynamic
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -18,29 +18,12 @@ spec:
   template:
     metadata:
       labels:
-        app: auth-app-vault-static
+        app: auth-app-vault-dynamic
     spec:
-      containers:
-      - env:
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: /var/secrets/google/key.json
-        image: gcr.io/reechar-hedge-gke-auth/security-demo-app:latest
-        imagePullPolicy: Always
-        name: security-demo-app
-        resources: {}
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        volumeMounts:
-        - mountPath: /var/run/secrets/vaultproject.io
-          name: vault-auth
-        - mountPath: /var/secrets/google
-          name: google-cloud-key
-
-      dnsPolicy: ClusterFirst
       initContainers:
       - env:
         - name: VAULT_ROLE
-          value: demo-static
+          value: demo-dynamic
         - name: VAULT_ADDR
           value: https://35.245.218.119:443
         - name: VAULT_CAPEM
@@ -80,17 +63,33 @@ spec:
         image: gcr.io/reechar-hedge-gke-auth/curler
         command: ["/bin/bash", "-c"]
         args:
-        - "curl -H \"X-Vault-Token: `cat /var/run/secrets/vaultproject.io/.vault-token`\" https://35.245.218.119/v1/secret/kv1/demo/key -k | jq  .data.file | jq '. | fromjson' > /var/secrets/google/key.json"
+        - "curl -H \"X-Vault-Token: `cat /var/run/secrets/vaultproject.io/.vault-token`\" https://35.245.218.119/v1/gcp/key/bucket-vault-dynamic -k |  jq .data.private_key_data | base64 -d > /var/secrets/google/key.json"
         volumeMounts:
         - mountPath: /var/run/secrets/vaultproject.io
           name: vault-auth
         - mountPath: /var/secrets/google
           name: google-cloud-key
+      containers:
+      - env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /var/secrets/google/key.json
+        image: gcr.io/reechar-hedge-gke-auth/security-demo-app:latest
+        imagePullPolicy: Always
+        name: security-demo-app
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/run/secrets/vaultproject.io
+          name: vault-auth
+        - mountPath: /var/secrets/google
+          name: google-cloud-key
+      dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
-      serviceAccount: vault-auth-static
-      serviceAccountName: vault-auth-static
+      serviceAccount: vault-auth-dynamic
+      serviceAccountName: vault-auth-dynamic
       terminationGracePeriodSeconds: 30
       volumes:
       - emptyDir:

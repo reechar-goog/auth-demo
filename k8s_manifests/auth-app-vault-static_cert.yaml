@@ -1,0 +1,12 @@
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: production-crt
+  namespace: auth-demo-vault-static
+spec:
+  dnsNames:
+  - auth-demo.hedge.reechar.co
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-production
+  secretName: production-crt

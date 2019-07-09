@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: auth-app-vault-static
+  name: auth-app-vault-static-service
+  namespace: auth-demo-vault-static
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: auth-app-vault-static
+  sessionAffinity: None
+  type: NodePort
