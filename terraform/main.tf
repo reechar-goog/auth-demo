@@ -13,20 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: auth-app-vault-dynamic
-  name: auth-app-vault-dynamic-service
-  namespace: auth-demo-vault-dynamic
-spec:
-  externalTrafficPolicy: Cluster
-  ports:
-  - port: 80
-    protocol: TCP
-    targetPort: 8080
-  selector:
-    app: auth-app-vault-dynamic
-  sessionAffinity: None
-  type: NodePort
+resource "google_project" "demo_project" {
+  name            = "Auth on GKE Demo"
+  project_id      = "reechar-hedge-gke-auth"
+  org_id          = "306799121337"
+  billing_account = "0030A3-D6BEAE-9C7088"
+}
+
+provider "google" {
+  project = "reechar-hedge-gke-auth"
+}

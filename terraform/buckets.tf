@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: auth-app-vault-dynamic
-  name: auth-app-vault-dynamic-service
-  namespace: auth-demo-vault-dynamic
-spec:
-  externalTrafficPolicy: Cluster
-  ports:
-  - port: 80
-    protocol: TCP
-    targetPort: 8080
-  selector:
-    app: auth-app-vault-dynamic
-  sessionAffinity: None
-  type: NodePort
+
+resource "google_storage_bucket" "k8s" {
+  name = "reechar-auth-demo-k8s"
+}
+
+resource "google_storage_bucket" "vault_static" {
+  name = "reechar-auth-demo-vault-static"
+}
+
+resource "google_storage_bucket" "vault_dynamic" {
+  name = "reechar-auth-demo-vault-dynamic"
+}
+
+resource "google_storage_bucket" "workload" {
+  name = "reechar-auth-demo-workload-identity"
+}
